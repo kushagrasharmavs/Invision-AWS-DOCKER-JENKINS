@@ -144,7 +144,7 @@ Open **http://localhost:5000** in your browser.
 
 ---
 
-## Production Checklist
+
 
 - [ ] Set `DEBUG=False` and a strong `SECRET_KEY`
 - [ ] Switch `DATABASE_URL` to PostgreSQL
