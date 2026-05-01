@@ -1,0 +1,74 @@
+pipeline {
+    agent any
+
+    environment {
+        IMAGE_NAME = "xxxxx"
+        ECR_REPO = "5387xxxxxxxx.dkr.ecr.us-east-1.amazonaws.com/snapdfy-invision"
+        CONTAINER_NAME = "xxxx"
+        REGION = "us-east-1"
+        APP_SERVER = "ubuntu@98.95.195.110"
+    }
+
+    triggers {
+        githubPush()
+    }
+
+    stages {
+
+        stage('Clone Code') {
+            steps {
+                git branch: 'main', url: 'https://github.com/YOUR_USERNAME/YOUR_REPO.git'
+            }
+        }
+
+        stage('Build Docker Image') {
+            steps {
+                sh 'docker build -t $IMAGE_NAME .'
+            }
+        }
+
+        stage('Tag Image') {
+            steps {
+                sh '''
+                docker tag $IMAGE_NAME:latest $ECR_REPO:latest
+                '''
+            }
+        }
+
+        stage('Push to ECR') {
+            steps {
+                sh '''
+                aws ecr get-login-password --region $REGION | docker login \
+                --username AWS \
+                --password-stdin xxxxxxxxxxx.dkr.ecr.us-east-1.amazonaws.com
+
+                docker push $ECR_REPO:latest
+                '''
+            }
+        }
+
+        stage('Deploy to APP_SERVER') {
+            steps {
+                sh '''
+                ssh -o StrictHostKeyChecking=no $APP_SERVER << EOF
+
+                aws ecr get-login-password --region $REGION | docker login \
+                --username AWS \
+                --password-stdin xxxxxxxxxxxx.dkr.ecr.us-east-1.amazonaws.com
+
+                docker pull $ECR_REPO:latest
+
+                docker stop $CONTAINER_NAME || true
+                docker rm $CONTAINER_NAME || true
+
+                docker run -d -p 5000:5000 \
+                --name $CONTAINER_NAME \
+                --restart always \
+                $ECR_REPO:latest
+
+                EOF
+                '''
+            }
+        }
+    }
+}
