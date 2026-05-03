@@ -1,6 +1,6 @@
 """
 InVision - Data Intelligence Platform
-Flask Backend Entry Point
+Flask Backend Entry Points
 """
 
 from flask import Flask
